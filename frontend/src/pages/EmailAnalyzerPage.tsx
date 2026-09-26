@@ -20,12 +20,13 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  Copy,
-  ExternalLink,
   ChevronRight,
   Shield,
   Ban,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileSearch,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 export const EmailAnalyzerPage: React.FC = () => {
@@ -33,27 +34,19 @@ export const EmailAnalyzerPage: React.FC = () => {
   const {
     activeAnalysis,
     analyzeCustomEmail,
-    loadDemoScenario,
     addEvidenceToLedger,
     executeResponseAction,
     addNotification
   } = useApp();
 
-  const [rawInput, setRawInput] = useState<string>(activeAnalysis ? activeAnalysis.emailData.rawText : DEMO_SCENARIOS[0].email.rawText);
-  const [selectedDemoId, setSelectedDemoId] = useState<string>('demo-phishing-1');
+  const [inputTab, setInputTab] = useState<'paste' | 'upload'>('paste');
+  const [rawInput, setRawInput] = useState<string>(
+    activeAnalysis ? activeAnalysis.emailData.rawText : DEMO_SCENARIOS[0].email.rawText
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'headers' | 'iocs' | 'geo' | 'timeline' | 'evidence'>('overview');
-  const [activeHeaderModal, setActiveHeaderModal] = useState<'spf' | 'dkim' | 'dmarc' | null>(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [activeTechTab, setActiveTechTab] = useState<'headers' | 'iocs' | 'geo' | 'timeline' | 'evidence'>('headers');
   const [isEvidenceCommitted, setIsEvidenceCommitted] = useState(false);
-
-  const handleSelectDemo = (scenarioId: string) => {
-    setSelectedDemoId(scenarioId);
-    const scenario = DEMO_SCENARIOS.find(s => s.id === scenarioId);
-    if (scenario) {
-      setRawInput(scenario.email.rawText);
-      loadDemoScenario(scenarioId);
-    }
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,7 +56,7 @@ export const EmailAnalyzerPage: React.FC = () => {
         const content = event.target?.result as string;
         if (content) {
           setRawInput(content);
-          addNotification('File Loaded', `Loaded '${file.name}' into analyzer workspace.`, 'info');
+          addNotification('File Loaded', `Loaded '${file.name}' into analyzer.`, 'info');
         }
       };
       reader.readAsText(file);
@@ -101,68 +94,66 @@ export const EmailAnalyzerPage: React.FC = () => {
   const currentAnalysis = activeAnalysis;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
-      {/* Workspace Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 font-mono">
-            <Mail className="w-5 h-5 text-blue-400" />
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-100">
-              EMAIL THREAT ANALYZER
-            </h1>
-            <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs border border-blue-500/30">
-              PRIMARY WORKSPACE
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-sans">
-            Paste raw RFC822 email, upload .eml payloads, or load pre-configured SIH demo threat vectors.
-          </p>
-        </div>
-
-        {/* Demo Scenario Picker Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          {DEMO_SCENARIOS.map((scenario) => (
-            <button
-              key={scenario.id}
-              onClick={() => handleSelectDemo(scenario.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
-                selectedDemoId === scenario.id
-                  ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-md'
-                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              {scenario.name.split(':')[0]}
-            </button>
-          ))}
-        </div>
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto font-sans text-slate-900">
+      {/* Page Header */}
+      <div className="pb-4 border-b border-slate-200">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+          Email Analyzer
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          Check an email for phishing indicators, suspicious links, authentication failures, and other threats.
+        </p>
       </div>
 
-      {/* Main Analyzer Workspace Grid */}
+      {/* Main Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: Input & Upload (5 Cols) */}
+        {/* LEFT: Input Area (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-lg space-y-4">
-            <div className="flex items-center justify-between font-mono">
-              <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Inbound Email Payload</span>
-              <label className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs cursor-pointer border border-slate-700 transition-colors">
-                <Upload className="w-3.5 h-3.5 text-blue-400" />
-                <span>Upload .eml</span>
-                <input type="file" accept=".eml,.txt,.msg" onChange={handleFileUpload} className="hidden" />
-              </label>
+          <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <button
+                  onClick={() => setInputTab('paste')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    inputTab === 'paste' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Paste Email
+                </button>
+                <button
+                  onClick={() => setInputTab('upload')}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    inputTab === 'upload' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Upload .eml
+                </button>
+              </div>
             </div>
 
-            <textarea
-              value={rawInput}
-              onChange={(e) => setRawInput(e.target.value)}
-              placeholder="Paste complete raw email headers and body here..."
-              rows={14}
-              className="w-full p-3 rounded-lg bg-slate-950 text-slate-200 font-mono text-xs border border-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 resize-y leading-relaxed"
-            />
+            {inputTab === 'paste' ? (
+              <textarea
+                value={rawInput}
+                onChange={(e) => setRawInput(e.target.value)}
+                placeholder="Paste the email content or email headers here..."
+                rows={14}
+                className="w-full p-3 rounded-lg bg-slate-50 text-slate-900 font-mono text-xs border border-slate-200 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 leading-relaxed resize-y"
+              />
+            ) : (
+              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-lg space-y-3">
+                <Upload className="w-8 h-8 text-slate-400 mx-auto" />
+                <div className="text-xs text-slate-600 font-medium">Select or drag an .eml payload file here</div>
+                <label className="inline-block px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold cursor-pointer shadow-xs">
+                  Browse Files
+                  <input type="file" accept=".eml,.txt,.msg" onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
+            )}
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 pt-1">
               <button
                 onClick={() => setRawInput('')}
-                className="px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200 bg-slate-950 border border-slate-800 hover:border-slate-700"
+                className="px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200"
               >
                 Clear Input
               </button>
@@ -170,383 +161,248 @@ export const EmailAnalyzerPage: React.FC = () => {
               <button
                 onClick={handleAnalyzeClick}
                 disabled={isAnalyzing || !rawInput.trim()}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-mono text-xs font-bold tracking-wide shadow-lg shadow-blue-900/40 transition-all disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-all disabled:opacity-50"
               >
-                <Zap className="w-4 h-4 text-amber-300" />
-                <span>ANALYZE EMAIL</span>
+                <Zap className="w-4 h-4" />
+                <span>Analyze Email</span>
               </button>
             </div>
           </div>
-
-          {/* Quick Scenario Description Card */}
-          {selectedDemoId && (
-            <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 font-mono text-xs space-y-1">
-              <div className="flex items-center justify-between text-slate-300 font-bold">
-                <span>Active Scenario Info</span>
-                <span className={`px-2 py-0.5 text-[10px] rounded border ${DEMO_SCENARIOS.find(s=>s.id===selectedDemoId)?.badgeColor}`}>
-                  {DEMO_SCENARIOS.find(s=>s.id===selectedDemoId)?.badge}
-                </span>
-              </div>
-              <p className="text-slate-400 font-sans text-xs">
-                {DEMO_SCENARIOS.find(s=>s.id===selectedDemoId)?.description}
-              </p>
-            </div>
-          )}
         </div>
 
-        {/* RIGHT COLUMN: Analysis & Workspace Results (7 Cols) */}
+        {/* RIGHT: Results Area (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           {isAnalyzing ? (
             <LoadingAnalysis onComplete={handleAnalysisComplete} />
           ) : !currentAnalysis ? (
-            <div className="p-12 text-center rounded-xl bg-slate-900/50 border border-slate-800 font-mono text-slate-500 space-y-3">
-              <Mail className="w-12 h-12 mx-auto text-slate-600" />
-              <div>Click "ANALYZE EMAIL" to execute automated SOC triage sequence</div>
+            <div className="p-12 text-center rounded-xl bg-white border border-slate-200 text-slate-500 space-y-2">
+              <FileSearch className="w-10 h-10 mx-auto text-slate-400" />
+              <div className="text-xs font-medium">Click "Analyze Email" to start threat assessment</div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Result Tabs Navigation */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800 overflow-x-auto font-mono text-xs">
-                {[
-                  { key: 'overview', label: 'AI Risk Analysis' },
-                  { key: 'headers', label: 'Header Forensics' },
-                  { key: 'iocs', label: `IOCs (${currentAnalysis.iocs.length})` },
-                  { key: 'geo', label: 'IP Geolocation' },
-                  { key: 'timeline', label: 'Investigation Timeline' },
-                  { key: 'evidence', label: 'Evidence Preservation' }
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key as any)}
-                    className={`px-3 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                      activeTab === tab.key
-                        ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              {/* FIRST LAYER: Threat Summary Box */}
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                      Assessment Verdict
+                    </span>
+                    <h2 className="text-base font-bold text-slate-900 mt-0.5">
+                      {currentAnalysis.analysis.riskScore >= 75 ? 'Threat Detected' : 'Email Assessment Complete'}
+                    </h2>
+                  </div>
+
+                  <ThreatBadge severity={currentAnalysis.analysis.severity} size="lg" />
+                </div>
+
+                <ThreatScore
+                  score={currentAnalysis.analysis.riskScore}
+                  severity={currentAnalysis.analysis.severity}
+                  classification={currentAnalysis.analysis.classification}
+                  confidence={currentAnalysis.analysis.confidence}
+                />
+
+                <p className="text-xs text-slate-700 leading-relaxed font-sans bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  {currentAnalysis.analysis.aiExplanation}
+                </p>
               </div>
 
-              {/* TAB 1: OVERVIEW & AI THREAT ANALYSIS */}
-              {activeTab === 'overview' && (
-                <div className="space-y-4">
-                  {/* Top Score Banner */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-lg">
-                    {/* Score Wheel */}
-                    <div className="sm:col-span-5 flex items-center justify-center">
-                      <ThreatScore
-                        score={currentAnalysis.analysis.riskScore}
-                        severity={currentAnalysis.analysis.severity}
-                        classification={currentAnalysis.analysis.classification}
-                        confidence={currentAnalysis.analysis.confidence}
-                        size="md"
-                      />
-                    </div>
-
-                    {/* AI Explanation Summary */}
-                    <div className="sm:col-span-7 flex flex-col justify-between font-mono space-y-3">
+              {/* SECOND LAYER: Why was this flagged? */}
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                  Why was this flagged?
+                </h3>
+                <div className="space-y-2">
+                  {currentAnalysis.analysis.factors.map((factor) => (
+                    <div key={factor.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <div>
-                        <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1 flex items-center gap-1.5">
-                          <Shield className="w-3.5 h-3.5 text-blue-400" />
-                          <span>AI-Assisted Risk Analysis Summary</span>
-                        </div>
-                        <p className="text-xs text-slate-200 font-sans leading-relaxed">
-                          {currentAnalysis.analysis.aiExplanation}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-slate-400">Auth Status:</span>
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${currentAnalysis.emailData.auth.spf === 'PASSED' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}`}>
-                          SPF: {currentAnalysis.emailData.auth.spf}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${currentAnalysis.emailData.auth.dkim === 'PASSED' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}`}>
-                          DKIM: {currentAnalysis.emailData.auth.dkim}
-                        </span>
+                        <div className="font-semibold text-slate-900">{factor.name}</div>
+                        <div className="text-slate-600 text-xs mt-0.5">{factor.explanation}</div>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Technical Details Toggle */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800"
+                  >
+                    <span>{showTechnicalDetails ? 'Hide technical details' : 'View technical details'}</span>
+                    {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* THIRD LAYER: Advanced Technical Details */}
+              {showTechnicalDetails && (
+                <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-1 border-b border-slate-200 pb-2 text-xs font-semibold overflow-x-auto">
+                    {[
+                      { key: 'headers', label: 'Email & Authentication' },
+                      { key: 'iocs', label: `Indicators (${currentAnalysis.iocs.length})` },
+                      { key: 'geo', label: 'Source Location' },
+                      { key: 'timeline', label: 'Forensic Timeline' },
+                      { key: 'evidence', label: 'Evidence Preservation' }
+                    ].map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveTechTab(t.key as any)}
+                        className={`px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
+                          activeTechTab === t.key
+                            ? 'bg-blue-50 text-blue-700 font-bold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Explainable Threat Indicators */}
-                  <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                    <h3 className="font-mono text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Why This Email Was Flagged ({currentAnalysis.analysis.factors.length} Risk Factors)
-                    </h3>
-                    <div className="space-y-2.5">
-                      {currentAnalysis.analysis.factors.map(factor => (
-                        <div key={factor.id} className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1">
-                          <div className="flex items-center justify-between font-mono text-xs font-semibold">
-                            <span className="text-slate-100 flex items-center gap-2">
-                              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
-                              {factor.name}
-                            </span>
-                            <ThreatBadge severity={factor.severity} size="sm" />
+                  {activeTechTab === 'headers' && (
+                    <div className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900">SPF Protocol</div>
+                          <div className={`font-semibold ${currentAnalysis.emailData.auth.spf === 'PASSED' ? 'text-emerald-700' : 'text-red-700'}`}>
+                            {currentAnalysis.emailData.auth.spf}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-400 pl-5">
-                            Evidence: <span className="text-slate-200">{factor.evidence}</span>
-                          </div>
-                          <p className="text-xs text-slate-300 font-sans pl-5 leading-relaxed">
-                            {factor.explanation}
+                          <p className="text-[11px] text-slate-500">
+                            {currentAnalysis.emailData.auth.spf === 'PASSED'
+                              ? 'SPF validated source IP address.'
+                              : 'SPF failed because the sending server was not authorized by the domain’s SPF policy.'}
                           </p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Incident Response Action Bar */}
-                  <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
-                    <h3 className="font-mono text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-amber-400" />
-                      <span>Recommended Incident Response Actions</span>
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
-                      <button
-                        onClick={() => handleResponseClick('Quarantine Email')}
-                        className="p-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Ban className="w-3.5 h-3.5" />
-                        <span>QUARANTINE EMAIL</span>
-                      </button>
-                      <button
-                        onClick={() => handleResponseClick('Block Domain')}
-                        className="p-2.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>BLOCK DOMAIN</span>
-                      </button>
-                      <button
-                        onClick={() => handleResponseClick('Block IP')}
-                        className="p-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>BLOCK IP</span>
-                      </button>
-                      <button
-                        onClick={() => handleResponseClick('Investigate User')}
-                        className="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Search className="w-3.5 h-3.5 text-blue-400" />
-                        <span>INVESTIGATE USER</span>
-                      </button>
-                      <button
-                        onClick={handleCommitEvidence}
-                        className="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Database className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>PRESERVE EVIDENCE</span>
-                      </button>
-                      <button
-                        onClick={handleGenerateReport}
-                        className="p-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>GENERATE REPORT</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900">DKIM Signature</div>
+                          <div className={`font-semibold ${currentAnalysis.emailData.auth.dkim === 'PASSED' ? 'text-emerald-700' : 'text-red-700'}`}>
+                            {currentAnalysis.emailData.auth.dkim}
+                          </div>
+                          <p className="text-[11px] text-slate-500">
+                            {currentAnalysis.emailData.auth.dkim === 'PASSED'
+                              ? 'Cryptographic DKIM signature verified.'
+                              : 'DKIM signature verification failed or selector DNS key missing.'}
+                          </p>
+                        </div>
 
-              {/* TAB 2: EMAIL HEADER FORENSICS */}
-              {activeTab === 'headers' && (
-                <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 font-mono text-xs">
-                  <h3 className="font-bold text-slate-100 uppercase tracking-wider">
-                    Extracted Email Headers & RFC822 Compliance
-                  </h3>
+                        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900">DMARC Policy</div>
+                          <div className={`font-semibold ${currentAnalysis.emailData.auth.dmarc === 'PASSED' ? 'text-emerald-700' : 'text-red-700'}`}>
+                            {currentAnalysis.emailData.auth.dmarc}
+                          </div>
+                          <p className="text-[11px] text-slate-500">
+                            Header alignment check verdict.
+                          </p>
+                        </div>
+                      </div>
 
-                  {/* Authentication Indicators */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div
-                      onClick={() => setActiveHeaderModal(activeHeaderModal === 'spf' ? null : 'spf')}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        currentAnalysis.emailData.auth.spf === 'PASSED'
-                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                          : 'bg-red-500/10 border-red-500/30 text-red-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold mb-1">
-                        <span>SPF</span>
-                        <span>{currentAnalysis.emailData.auth.spf}</span>
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2 font-mono">
+                        <div className="flex justify-between border-b border-slate-200 pb-1">
+                          <span className="text-slate-500">From:</span>
+                          <span className="text-slate-900 font-semibold">{currentAnalysis.emailData.headers.from}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200 pb-1">
+                          <span className="text-slate-500">To:</span>
+                          <span className="text-slate-900">{currentAnalysis.emailData.headers.to}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200 pb-1">
+                          <span className="text-slate-500">Reply-To:</span>
+                          <span className="text-orange-700 font-semibold">{currentAnalysis.emailData.headers.replyTo || 'None'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Source IP:</span>
+                          <span className="text-red-700 font-bold">{currentAnalysis.emailData.headers.sourceIP}</span>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        Click for DNS details
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setActiveHeaderModal(activeHeaderModal === 'dkim' ? null : 'dkim')}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        currentAnalysis.emailData.auth.dkim === 'PASSED'
-                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                          : 'bg-red-500/10 border-red-500/30 text-red-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold mb-1">
-                        <span>DKIM</span>
-                        <span>{currentAnalysis.emailData.auth.dkim}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        Click for RSA details
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setActiveHeaderModal(activeHeaderModal === 'dmarc' ? null : 'dmarc')}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        currentAnalysis.emailData.auth.dmarc === 'PASSED'
-                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                          : 'bg-red-500/10 border-red-500/30 text-red-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold mb-1">
-                        <span>DMARC</span>
-                        <span>{currentAnalysis.emailData.auth.dmarc}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        Click for policy alignment
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Auth details modal popup */}
-                  {activeHeaderModal && (
-                    <div className="p-3 rounded-lg bg-slate-950 border border-blue-500/40 text-slate-200 text-xs space-y-1">
-                      <div className="font-bold text-blue-400 uppercase">
-                        {activeHeaderModal.toUpperCase()} Authentication Verdict Details
-                      </div>
-                      <p className="text-slate-300 font-sans">
-                        {activeHeaderModal === 'spf' && currentAnalysis.emailData.auth.spfDetails}
-                        {activeHeaderModal === 'dkim' && currentAnalysis.emailData.auth.dkimDetails}
-                        {activeHeaderModal === 'dmarc' && currentAnalysis.emailData.auth.dmarcDetails}
-                      </p>
                     </div>
                   )}
 
-                  {/* Header key-values table */}
-                  <div className="space-y-2 divide-y divide-slate-800">
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">From:</span>
-                      <span className="text-slate-200 font-semibold select-all">{currentAnalysis.emailData.headers.from}</span>
+                  {activeTechTab === 'iocs' && (
+                    <div className="space-y-2">
+                      {currentAnalysis.iocs.map(ioc => (
+                        <IOCChip key={ioc.id} ioc={ioc} onInvestigate={() => navigate('/intelligence')} />
+                      ))}
                     </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">To:</span>
-                      <span className="text-slate-200 select-all">{currentAnalysis.emailData.headers.to}</span>
+                  )}
+
+                  {activeTechTab === 'geo' && (
+                    <GeoMap location={currentAnalysis.geoLocation} height="300px" />
+                  )}
+
+                  {activeTechTab === 'timeline' && (
+                    <ForensicTimeline timeline={currentAnalysis.timeline} />
+                  )}
+
+                  {activeTechTab === 'evidence' && (
+                    <div className="space-y-3 text-xs font-mono">
+                      <div className="p-3 rounded bg-slate-50 border border-slate-200 space-y-1">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block">SHA-256 Digest</span>
+                        <div className="text-emerald-700 font-bold break-all select-all">
+                          8f4a7d91c32094182490182401928409182409182409182409182409c92a
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {isEvidenceCommitted ? (
+                          <span className="px-3 py-1.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Evidence Committed to Ledger</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={handleCommitEvidence}
+                            className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
+                          >
+                            Commit Evidence to Ledger
+                          </button>
+                        )}
+                        <button
+                          onClick={handleGenerateReport}
+                          className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs"
+                        >
+                          Generate Incident Report
+                        </button>
+                      </div>
                     </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">Reply-To:</span>
-                      <span className="text-amber-400 font-semibold select-all">{currentAnalysis.emailData.headers.replyTo || 'None'}</span>
-                    </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">Subject:</span>
-                      <span className="text-slate-200">{currentAnalysis.emailData.headers.subject}</span>
-                    </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">Source IP:</span>
-                      <span className="text-red-400 font-bold select-all">{currentAnalysis.emailData.headers.sourceIP}</span>
-                    </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">Return-Path:</span>
-                      <span className="text-slate-300">{currentAnalysis.emailData.headers.returnPath}</span>
-                    </div>
-                    <div className="pt-2 flex flex-col sm:flex-row justify-between gap-1">
-                      <span className="text-slate-500 w-28 shrink-0">Message-ID:</span>
-                      <span className="text-slate-400 text-[11px]">{currentAnalysis.emailData.headers.messageId}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
 
-              {/* TAB 3: IOC EXTRACTION */}
-              {activeTab === 'iocs' && (
-                <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 font-mono">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-                      Extracted Indicators of Compromise (IOCs)
-                    </h3>
-                    <span className="text-xs text-slate-400">Total: {currentAnalysis.iocs.length}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {currentAnalysis.iocs.map((ioc) => (
-                      <IOCChip
-                        key={ioc.id}
-                        ioc={ioc}
-                        onInvestigate={() => navigate('/intelligence')}
-                      />
-                    ))}
-                  </div>
+              {/* Recommended Response Actions */}
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                  Recommended Actions
+                </h3>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <button
+                    onClick={() => handleResponseClick('Quarantine Email')}
+                    className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 font-semibold hover:bg-red-100 transition-colors"
+                  >
+                    Quarantine Email
+                  </button>
+                  <button
+                    onClick={() => handleResponseClick('Block Domain')}
+                    className="px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 font-semibold hover:bg-orange-100 transition-colors"
+                  >
+                    Block Domain
+                  </button>
+                  <button
+                    onClick={() => handleResponseClick('Block IP')}
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-semibold hover:bg-amber-100 transition-colors"
+                  >
+                    Block Source IP
+                  </button>
+                  <button
+                    onClick={handleGenerateReport}
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    Generate Report
+                  </button>
                 </div>
-              )}
-
-              {/* TAB 4: IP GEOLOCATION */}
-              {activeTab === 'geo' && (
-                <div className="space-y-3">
-                  <GeoMap location={currentAnalysis.geoLocation} height="360px" />
-                </div>
-              )}
-
-              {/* TAB 5: FORENSIC TIMELINE */}
-              {activeTab === 'timeline' && (
-                <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 font-mono">
-                  <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider mb-2">
-                    Forensic Investigation Timeline Sequence
-                  </h3>
-                  <ForensicTimeline timeline={currentAnalysis.timeline} />
-                </div>
-              )}
-
-              {/* TAB 6: EVIDENCE PRESERVATION & IMMUTABLE LEDGER */}
-              {activeTab === 'evidence' && (
-                <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 font-mono">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-                        Tamper-Evident Forensic Evidence Preservation
-                      </h3>
-                      <p className="text-xs text-slate-400 font-sans mt-0.5">
-                        Web Crypto SHA-256 integrity verification linked to simulated immutable block chain.
-                      </p>
-                    </div>
-                    {isEvidenceCommitted ? (
-                      <span className="px-3 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>BLOCK COMMITTED</span>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={handleCommitEvidence}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-colors flex items-center gap-1.5"
-                      >
-                        <Database className="w-3.5 h-3.5" />
-                        <span>Commit to Ledger</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Hash verification box */}
-                  <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                    <div className="text-[11px] text-slate-500">SHA-256 DIGITAL INTEGRITY SIGNATURE</div>
-                    <div className="text-xs font-mono font-bold text-emerald-400 select-all break-all bg-slate-900 p-2 rounded border border-slate-800">
-                      8f4a7d91c32094182490182401928409182409182409182409182409c92a
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                      <span>Status: <span className="text-emerald-400 font-bold">✓ VERIFIED & MATCHED</span></span>
-                      <span>Algorithm: Web Crypto SHA-256</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex gap-3">
-                    <button
-                      onClick={handleGenerateReport}
-                      className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      <span>View Printable Forensic Incident Report</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>

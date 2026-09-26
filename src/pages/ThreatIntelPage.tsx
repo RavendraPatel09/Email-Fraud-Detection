@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { IOCChip } from '../components/ui/IOCChip';
-import { IOCType } from '../types';
-import { ShieldAlert, Search, Filter, Database, Ban } from 'lucide-react';
+import { ShieldAlert, Search, Filter } from 'lucide-react';
 
 export const ThreatIntelPage: React.FC = () => {
   const { iocs, searchQuery } = useApp();
@@ -19,40 +18,37 @@ export const ThreatIntelPage: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto font-mono">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto font-sans text-slate-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-red-400" />
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-100">
-              GLOBAL THREAT INTELLIGENCE REPUTATION
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400 font-sans mt-1">
-            Aggregated indicators of compromise (IOCs) synced with CERT-In, OpenPhish, and Tor threat feeds.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+            Threat Intelligence
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Review suspicious IPs, domains, URLs and file indicators.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 text-xs">
-            Total IOC Records: <span className="text-blue-400 font-bold">{iocs.length}</span>
+          <span className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium shadow-2xs">
+            Total Threat Indicators: <span className="text-blue-700 font-bold font-mono">{iocs.length}</span>
           </span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
         <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
           <Filter className="w-4 h-4 text-slate-400 shrink-0" />
           {['ALL', 'IP', 'DOMAIN', 'URL', 'HASH'].map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 filterType === t
-                  ? 'bg-blue-600 text-white font-bold shadow'
-                  : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {t}
@@ -60,22 +56,22 @@ export const ThreatIntelPage: React.FC = () => {
           ))}
         </div>
 
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search IOC value or source..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            placeholder="Search IP, domain, URL or hash..."
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 font-mono"
           />
         </div>
       </div>
 
-      {/* IOC Table View */}
-      <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-        <div className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
-          Active Intelligence Feeds ({filtered.length} Matches)
+      {/* IOC Table / List */}
+      <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+        <div className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
+          Related Threat Indicators ({filtered.length} Matches)
         </div>
 
         <div className="space-y-2">

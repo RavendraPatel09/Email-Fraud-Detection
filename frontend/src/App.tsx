@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -15,6 +17,7 @@ import { InvestigationsPage } from './pages/InvestigationsPage';
 import { EvidenceLedgerPage } from './pages/EvidenceLedgerPage';
 import { IncidentsPage } from './pages/IncidentsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { FeedbackPage } from './pages/FeedbackPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 
 import { SignInPage } from './pages/auth/SignInPage';
@@ -25,7 +28,7 @@ const AppLayout: React.FC = () => {
   const { isPresentationMode } = useApp();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0B0F17] text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 font-sans">
       {/* Sidebar */}
       <Sidebar />
 
@@ -33,7 +36,7 @@ const AppLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header />
         
-        <main className="flex-1 overflow-y-auto bg-[#0B0F17] relative">
+        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0B0F17] relative">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/analyzer" element={<EmailAnalyzerPage />} />
@@ -42,6 +45,7 @@ const AppLayout: React.FC = () => {
             <Route path="/evidence" element={<EvidenceLedgerPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/profile" element={<SettingsPage />} />
             <Route path="/settings/security" element={<SettingsPage />} />
@@ -62,27 +66,31 @@ const AppLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Unauthenticated Auth Routes */}
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AppProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Unauthenticated Auth Routes */}
+                <Route path="/signin" element={<SignInPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-            {/* Protected Platform Shell */}
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
-      </AppProvider>
-    </AuthProvider>
+                {/* Protected Platform Shell */}
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </BrowserRouter>
+          </AppProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

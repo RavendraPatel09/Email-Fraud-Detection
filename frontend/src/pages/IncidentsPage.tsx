@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ThreatBadge } from '../components/ui/ThreatBadge';
-import { IncidentStatus, Severity } from '../types';
-import { AlertOctagon, Search, Filter, ChevronRight, Plus, CheckCircle, ShieldAlert } from 'lucide-react';
+import { IncidentStatus } from '../types';
+import { Search, Filter, Plus } from 'lucide-react';
 
 export const IncidentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,54 +24,51 @@ export const IncidentsPage: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto font-mono">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto font-sans text-slate-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2">
-            <AlertOctagon className="w-5 h-5 text-orange-400" />
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-100">
-              INCIDENT MANAGEMENT CONSOLE
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400 font-sans mt-1">
-            Real-time triage queue for email security incidents across corporate mailboxes.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+            Incidents
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Manage active security incidents and response actions.
           </p>
         </div>
 
         <button
           onClick={() => navigate('/analyzer')}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all self-start sm:self-center flex items-center gap-1.5"
+          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" />
-          <span>New Triage Incident</span>
+          <span>New Incident</span>
         </button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto text-xs">
-          <span className="text-slate-400 font-bold flex items-center gap-1 mr-1">
+          <span className="text-slate-500 font-semibold flex items-center gap-1 mr-1">
             <Filter className="w-3.5 h-3.5" /> Filter:
           </span>
           {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(s => (
             <button
               key={s}
               onClick={() => setFilterSeverity(s)}
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                filterSeverity === s ? 'bg-blue-600 text-white font-bold' : 'bg-slate-950 text-slate-400 border border-slate-800'
+              className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                filterSeverity === s ? 'bg-blue-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {s}
             </button>
           ))}
-          <span className="text-slate-700 font-bold">|</span>
+          <span className="text-slate-300">|</span>
           {['ALL', 'OPEN', 'INVESTIGATING', 'QUARANTINED', 'RESOLVED'].map(st => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                filterStatus === st ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-950 text-slate-400 border border-slate-800'
+              className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                filterStatus === st ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {st}
@@ -85,56 +82,56 @@ export const IncidentsPage: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search cases or IPs..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            placeholder="Search incident ID or source IP..."
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono placeholder-slate-400 focus:outline-none focus:border-blue-600"
           />
         </div>
       </div>
 
-      {/* Incidents Table / Grid */}
-      <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-        <div className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
-          Active Case Triage Queue ({filteredIncidents.length} Incidents)
+      {/* Table */}
+      <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+        <div className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
+          Incidents Queue ({filteredIncidents.length} Active)
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider">
-                <th className="pb-3 font-semibold">Incident ID</th>
-                <th className="pb-3 font-semibold">Title & Classification</th>
-                <th className="pb-3 font-semibold">Source IP & Location</th>
+              <tr className="border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-mono">
+                <th className="pb-3 font-semibold">Incident</th>
+                <th className="pb-3 font-semibold">Classification & Sender</th>
+                <th className="pb-3 font-semibold">Source IP / Location</th>
                 <th className="pb-3 font-semibold">Risk Level</th>
                 <th className="pb-3 font-semibold">Status</th>
                 <th className="pb-3 font-semibold">Assigned To</th>
                 <th className="pb-3 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100 font-sans">
               {filteredIncidents.map((inc) => (
-                <tr key={inc.id} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={inc.id} className="hover:bg-slate-50 transition-colors">
                   <td
                     onClick={() => navigate(`/investigations?id=${inc.id}`)}
-                    className="py-3 font-bold text-blue-400 cursor-pointer hover:underline"
+                    className="py-3 font-bold font-mono text-blue-600 cursor-pointer hover:underline"
                   >
                     {inc.id}
                   </td>
                   <td className="py-3">
-                    <div className="font-bold text-slate-200">{inc.title}</div>
-                    <div className="text-[11px] text-slate-400 font-sans">{inc.sender}</div>
+                    <div className="font-semibold text-slate-900">{inc.title}</div>
+                    <div className="text-[11px] text-slate-500 font-mono">{inc.sender}</div>
                   </td>
                   <td className="py-3">
-                    <span className="text-slate-200 font-semibold">{inc.sourceIP}</span>
+                    <span className="text-slate-900 font-mono font-semibold">{inc.sourceIP}</span>
                     <span className="text-slate-500 text-[11px] block">{inc.sourceLocation}</span>
                   </td>
                   <td className="py-3">
                     <ThreatBadge severity={inc.severity} size="sm" />
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 font-mono">
                     <select
                       value={inc.status}
                       onChange={(e) => updateIncidentStatus(inc.id, e.target.value as IncidentStatus)}
-                      className="bg-slate-950 text-slate-200 text-xs p-1 rounded border border-slate-800 font-mono focus:outline-none focus:border-blue-500"
+                      className="bg-slate-50 text-slate-900 text-xs p-1 rounded border border-slate-200 focus:outline-none focus:border-blue-600"
                     >
                       <option value="OPEN">OPEN</option>
                       <option value="INVESTIGATING">INVESTIGATING</option>
@@ -142,15 +139,15 @@ export const IncidentsPage: React.FC = () => {
                       <option value="RESOLVED">RESOLVED</option>
                     </select>
                   </td>
-                  <td className="py-3 text-slate-400 text-[11px]">
+                  <td className="py-3 text-slate-600 text-[11px]">
                     {inc.assignedTo || 'Unassigned'}
                   </td>
                   <td className="py-3 text-right">
                     <button
                       onClick={() => navigate(`/investigations?id=${inc.id}`)}
-                      className="px-2.5 py-1 rounded bg-blue-600/10 text-blue-400 border border-blue-500/20 hover:bg-blue-600/20 text-xs font-bold"
+                      className="px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-xs font-semibold"
                     >
-                      Open Workspace
+                      Investigate
                     </button>
                   </td>
                 </tr>
