@@ -6,6 +6,73 @@ export type IOCType = 'IP' | 'DOMAIN' | 'URL' | 'EMAIL' | 'HASH' | 'ATTACHMENT';
 
 export type IOCReputation = 'MALICIOUS' | 'SUSPICIOUS' | 'CLEAN' | 'UNKNOWN';
 
+export type UserRole =
+  | 'Security Analyst'
+  | 'SOC Analyst'
+  | 'Incident Responder'
+  | 'Administrator'
+  | 'Researcher'
+  | 'Student / Trainee'
+  | 'Other';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  organization: string;
+  role: UserRole;
+  phone?: string;
+  bio?: string;
+  avatarUrl?: string;
+  accountType: string;
+  createdDate: string;
+  lastLogin: string;
+  status: 'Active' | 'Suspended' | 'Pending';
+  twoFactorEnabled: boolean;
+}
+
+export interface SessionInfo {
+  id: string;
+  device: string;
+  browser: string;
+  location: string;
+  ipAddress: string;
+  lastActive: string;
+  isCurrent: boolean;
+}
+
+export interface LoginActivity {
+  id: string;
+  device: string;
+  location: string;
+  ipAddress: string;
+  date: string;
+  status: 'Current Session' | 'Successful' | 'Failed Attempt';
+}
+
+export interface NotificationPreferences {
+  criticalThreats: boolean;
+  highRiskPhishing: boolean;
+  suspiciousIOCs: boolean;
+  incidentAssigned: boolean;
+  incidentStatusChanged: boolean;
+  evidenceVerified: boolean;
+  reportGenerated: boolean;
+  investigationCompleted: boolean;
+  productUpdates: boolean;
+  marketingCommunications: boolean;
+}
+
+export interface AppearancePreferences {
+  theme: 'dark' | 'light' | 'system';
+  density: 'comfortable' | 'compact';
+  enableAnimations: boolean;
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  defaultDashboard: string;
+}
+
 export interface EmailHeader {
   from: string;
   to: string;
@@ -96,7 +163,7 @@ export interface EvidenceItem {
   id: string;
   incidentId: string;
   timestamp: string;
-  type: string; // e.g. "Original Email Headers", "Source IP Reputation", "Suspicious Payload Hash"
+  type: string;
   hash: string;
   algorithm: 'SHA-256';
   verified: boolean;

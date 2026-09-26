@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { NotificationDrawer } from './components/layout/NotificationDrawer';
@@ -13,6 +15,11 @@ import { InvestigationsPage } from './pages/InvestigationsPage';
 import { EvidenceLedgerPage } from './pages/EvidenceLedgerPage';
 import { IncidentsPage } from './pages/IncidentsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { SettingsPage } from './pages/settings/SettingsPage';
+
+import { SignInPage } from './pages/auth/SignInPage';
+import { SignUpPage } from './pages/auth/SignUpPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 
 const AppLayout: React.FC = () => {
   const { isPresentationMode } = useApp();
@@ -35,6 +42,12 @@ const AppLayout: React.FC = () => {
             <Route path="/evidence" element={<EvidenceLedgerPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/profile" element={<SettingsPage />} />
+            <Route path="/settings/security" element={<SettingsPage />} />
+            <Route path="/settings/notifications" element={<SettingsPage />} />
+            <Route path="/settings/appearance" element={<SettingsPage />} />
+            <Route path="/settings/sessions" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -49,10 +62,27 @@ const AppLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Unauthenticated Auth Routes */}
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+            {/* Protected Platform Shell */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AppProvider>
+    </AuthProvider>
   );
 }

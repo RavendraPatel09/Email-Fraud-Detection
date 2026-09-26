@@ -9,21 +9,21 @@ export default {
     extend: {
       colors: {
         soc: {
-          bg: '#0B0F17',
-          card: '#121824',
-          cardHover: '#182030',
-          border: '#1E293B',
-          borderHighlight: '#334155',
-          accent: '#3B82F6',
-          accentHover: '#2563EB',
-          critical: '#EF4444',
-          high: '#F97316',
-          medium: '#F59E0B',
-          low: '#10B981',
-          safe: '#06B6D4',
-          text: '#F8FAFC',
-          muted: '#94A3B8',
-          dim: '#64748B'
+          bg: '#F8FAFC',
+          card: '#FFFFFF',
+          cardHover: '#F1F5F9',
+          border: '#E2E8F0',
+          borderHighlight: '#CBD5E1',
+          accent: '#2563EB',
+          accentHover: '#1D4ED8',
+          critical: '#DC2626',
+          high: '#EA580C',
+          medium: '#D97706',
+          low: '#2563EB',
+          safe: '#16A34A',
+          text: '#0F172A',
+          muted: '#64748B',
+          dim: '#94A3B8'
         }
       },
       fontFamily: {

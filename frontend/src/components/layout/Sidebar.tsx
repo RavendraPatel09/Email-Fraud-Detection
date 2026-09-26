@@ -9,10 +9,9 @@ import {
   Database,
   AlertOctagon,
   FileText,
+  Settings,
   Activity,
-  Radio,
-  Lock,
-  ChevronRight
+  Lock
 } from 'lucide-react';
 
 const navItems = [
@@ -22,7 +21,8 @@ const navItems = [
   { path: '/investigations', label: 'Investigations', icon: Search, num: '04' },
   { path: '/evidence', label: 'Evidence Ledger', icon: Database, num: '05' },
   { path: '/incidents', label: 'Incidents', icon: AlertOctagon, num: '06' },
-  { path: '/reports', label: 'Reports', icon: FileText, num: '07' }
+  { path: '/reports', label: 'Reports', icon: FileText, num: '07' },
+  { path: '/settings', label: 'Settings', icon: Settings, num: '08' }
 ];
 
 export const Sidebar: React.FC = () => {
